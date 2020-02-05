@@ -1,4 +1,8 @@
 # General options
 all:
+  root_dir: ""
   output_dir: "output"
   sample_key_fp: ""
+
+align:
+  target_fasta: ""
