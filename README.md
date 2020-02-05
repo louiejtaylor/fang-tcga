@@ -1,6 +1,8 @@
 # fang-tcga
 Snakemake workflow to map non-human TCGA reads to target genomes and summarize alignments
 
+Note: this project is under active development and is not currently operational.
+
 ## Install
 
     git clone https://github.com/louiejtaylor/fang-tcga
