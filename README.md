@@ -19,4 +19,6 @@ Requires Snakemake and Conda to run. All other dependencies are handled at runti
 
 If you'd like only certain outputs, specify a target rule like so:
 
-    snakemake --configfile config.yml --use-conda all_dump_unmapped
+    snakemake --configfile config.yml --use-conda all_preprocess
+
+Available target rules include: `all_download`, `all_preprocess`, `all_align`, `all_summarize`

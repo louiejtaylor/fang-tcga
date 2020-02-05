@@ -1,2 +1,4 @@
-output_dir: ""
-sample_key_fp: ""
+# General options
+all:
+  output_dir: "output"
+  sample_key_fp: ""
