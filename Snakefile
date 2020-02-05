@@ -20,9 +20,13 @@ rule download_bams:
         output_dir/"download"/"{sample}.bam"
     shell:
         """
-        # wget?
+        # wget? curl? aspera? other NCI-specific tool?
         """
 
+rule all_download:
+    input:
+        expand(str(output_dir/"download"/"{sample}.bam"), sample = Samples)
+        
 # Preprocess data
 rule dump_unmapped_reads:
     input:
