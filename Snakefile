@@ -8,12 +8,17 @@ from pathlib import Path
 import json, requests
 
 def read_samples(sample_fp):
-    with open(sample_fp) as f:
+    with open(sample_fp, "r") as f:
         samples = f.read()
-    return [sample.strip() for sample in samples.split("\n")]
+    return [sample.strip() for sample in samples.split("\n") if len(sample) > 0]
 
-Samples = read_samples(config["download"]["acc_list_fp"])
 output_dir = Path(config["all"]["root_dir"])/Path(config["all"]["output_dir"])
+
+try:
+    Samples = read_samples(output_dir/"samples"/"sample_list.txt")
+    print("Found",len(Samples),"samples")
+except FileNotFoundError:
+    print("Sample list not initialized: be sure to run with the generate_sample_list target rule before your first run.")
 
 # Generate sample list (if necessary)
 rule generate_sample_list:
@@ -52,11 +57,21 @@ rule generate_sample_list:
 
 # Acquire data
 rule download_bams:
+    input:
+        sample_list = output_dir/"samples"/"sample_list.txt"
     output:
         output_dir/"download"/"{sample}.bam"
+    params:
+        token_str = ("-t "+ config["download"]["token_file"])*(len(config["download"]["token_file"]) > 0),
+        sample = "{sample}",
+        wdir = str(output_dir/"download"/"{sample}")
+    conda:
+        "download_env.yml"
     shell:
         """
-        # wget? curl? aspera? other NCI-specific tool?
+        mkdir -p {params.wdir}
+        gdc-client download -d {params.wdir} {params.token_str} {params.sample}
+        mv {params.wdir}/https\:/api.gdc.cancer.gov/data/{params.sample}/*.bam {output}
         """
 
 rule all_download:
