@@ -1,8 +1,14 @@
 # General options
 all:
   root_dir: ""
-  output_dir: "output"
-  sample_key_fp: ""
+  output_dir: "fang_tcga_output"
+
+download:
+  acc_list_fp: ""
+  acc_list_format: "" #options: "gdc-json", "list", "gdc-manifest"
+  map_sample_list_to_file_ids: True #if the sample list is actually a list of case IDs
+  allowed_strategies: ["WGS","WXS","RNA-Seq"]
+  token_file: ""
 
 align:
   target_fasta: ""

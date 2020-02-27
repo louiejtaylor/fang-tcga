@@ -5,14 +5,50 @@
 #
 
 from pathlib import Path
+import json, requests
 
 def read_samples(sample_fp):
     with open(sample_fp) as f:
         samples = f.read()
-    return [sample.strip() for sample in samples.split(\n)]
+    return [sample.strip() for sample in samples.split("\n")]
 
-Samples = read_samples(config["all"]["sample_key_fp"])
+Samples = read_samples(config["download"]["acc_list_fp"])
 output_dir = Path(config["all"]["root_dir"])/Path(config["all"]["output_dir"])
+
+# Generate sample list (if necessary)
+rule generate_sample_list:
+    input:
+        sample_file = config["download"]["acc_list_fp"]
+    output:
+        sample_list = output_dir/"samples"/"sample_list.txt"
+    params:
+        list_format=config["download"]["acc_list_format"],
+        needs_mapping=config["download"]["map_sample_list_to_file_ids"],
+        experimental_strategies=config["download"]["allowed_strategies"]
+    run:
+        if params.list_format=="list":
+            acc_list = read_samples(input.sample_file)
+        elif params.list_format=="gdc-json":
+            json_list = json.load(open(input.sample_file))
+            acc_list = [z["cases"][0]["case_id"] for z in json_list]
+        else:
+            raise Exception("Unknown sample list format: "+str(params.list_format))
+        acc_list = list(set(acc_list))
+        if params.needs_mapping:
+            file_list = []
+            for c in acc_list:
+                json_mapping = json.loads(requests.get("https://api.gdc.cancer.gov/cases/"+c+"?expand=files").text)
+                for fi in json_mapping["data"]["files"]:
+                    if fi["data_format"]=="BAM":
+                        if fi["experimental_strategy"] in params.experimental_strategies:
+                            file_list.append([c, fi["file_id"], fi["file_name"]])
+            with open(output_dir/"samples"/"sample_mapping.tsv", 'w') as o:
+                o.write('\n'.join(['\t'.join(f) for f in file_list]))
+            final_list = [f[1] for f in file_list]
+        else:
+            final_list = acc_list
+        with open(output.sample_list, "w") as o:
+            o.write('\n'.join(final_list))
 
 # Acquire data
 rule download_bams:
@@ -27,79 +63,3 @@ rule all_download:
     input:
         expand(str(output_dir/"download"/"{sample}.bam"), sample = Samples)
         
-# Preprocess data
-rule dump_unmapped_reads:
-    input:
-        rules.download_bams.output
-    output:
-        output_dir/"preproc"/"{sample}.fastq.gz"
-    conda:
-        "samtools_env.yml"
-    shell:
-        """
-        
-        """
-
-rule all_dump_unmapped:
-    input:
-        expand(str(output_dir/"preproc"/"{sample}.fastq.gz"), sample = Samples)
-
-# Align reads
-rule build_aln_db:
-    input:
-        config["align"]["target_fasta"]
-    output:
-        # db for the aligner I use
-    conda:
-        "align_env.yml"
-    shell:
-        """
-
-        """
-
-rule align_reads:
-    input:
-        reads = rules.dump_unmapped_reads.output,
-        db = rules.build_aln_db.output
-    output:
-        output_dir/"alignments"/"{sample}.bam"
-    conda:
-        "align_env.yml"
-    shell:
-        """
-
-        """
-
-rule all_align:
-    input:
-        expand(str(output_dir/"alignments"/"{sample}.bam"), sample = Samples)
-
-# Summary
-rule summarize_alignments:
-    input:
-        rules.align_reads.output
-    output:
-        # some kind of human and machine-readable summary--text file?
-    conda:
-        "samtools_env.yml"
-    shell:
-        """
-
-        """
-
-rule visualize_summary_data:
-    input:
-        # expand() statement for whatever `summarize_alignments` produces
-    output:
-        output_dir/"summary"/"all_summarized.Rmd"
-    conda:
-        "viz_env.yml"
-    shell:
-        """
-        
-        """
-
-rule all_summarize:
-    input:
-        a = rules.visualize_summary_data.output,
-        b = expand() #whatever rules.summarize_alignments produces
