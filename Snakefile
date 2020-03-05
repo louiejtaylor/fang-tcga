@@ -20,6 +20,8 @@ try:
 except FileNotFoundError:
     print("Sample list not initialized: be sure to run with the generate_sample_list target rule before your first run.")
 
+print(Samples)
+
 # Generate sample list (if necessary)
 rule generate_sample_list:
     input:
@@ -77,4 +79,86 @@ rule download_bams:
 rule all_download:
     input:
         expand(str(output_dir/"download"/"{sample}.bam"), sample = Samples)
-        
+       
+# Preprocess data
+rule bam_to_reads:
+    input:
+        output_dir/"download"/"{sample}.bam"
+    output:
+        output_dir/"reads"/"{sample}.fastq.gz"
+    params:
+        out_fastq = str(output_dir/"reads"/"{sample}.fastq.gz")
+    conda:
+        "samtools_env.yml"
+    shell:
+        """
+        bedtools bamtofastq -i {input} -o {params.out_fastq}
+        gzip {params.out_fastq}
+        """
+
+rule all_dump_unmapped:
+    input:
+        expand(str(output_dir/"preproc"/"{sample}.fastq.gz"), sample = Samples)
+
+# Align reads
+
+rule build_aln_db:
+    input:
+        config["align"]["target_fasta"]
+    output:
+        output_dir/"db"/"db.mmi"
+    conda:
+        "align_env.yml"
+    shell:
+        """
+        minimap2 -x sr -d {output} {input}
+        """
+
+rule align_reads:
+    input:
+        reads = output_dir/"reads"/"{sample}.fastq.gz",
+        db = output_dir/"db"/"db.mmi"
+    output:
+        output_dir/"alignments"/"{sample}.sam"
+    conda:
+        "align_env.yml"
+    shell:
+        """
+        minimap2 -ax sr {input.db} {input.reads} > {output}
+        """
+
+rule all_align:
+    input:
+        expand(str(output_dir/"alignments"/"{sample}.bam"), sample = Samples)
+
+
+# Summarize alignments
+rule process_alignment:
+    input:
+        output_dir/"alignments"/"{sample}.sam"
+    output:
+        bam = temp(output_dir/"alignments"/"{sample}.bam"),
+        sorted = temp(output_dir/"alignments"/"{sample}.sorted.bam"),
+        bai = temp(output_dir/"alignments"/"{sample}.sorted.bam.bai")
+    params:
+        target = config["align"]["target_fasta"]
+    shell:
+        """
+        samtools view -bT {params.target} {input} > {output.bam}
+        samtools sort -o {output.sorted} {output.bam}
+        samtools index {output.sorted} {output.bai}
+        """
+
+#rule summarize_alignments:
+#    input:
+#        rules.align_reads.output
+#    output:
+#        # some kind of human and machine-readable summary--text file?
+#    conda:
+#        "samtools_env.yml"
+#    shell:
+#        """
+#        
+#        """
+
+

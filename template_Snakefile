@@ -1,4 +1,4 @@
-# -*- mode: Snakemake -*-
+#-*- mode: Snakemake -*-
 #
 # Workflow for dumping non-human reads from The Cancer Genome Atlas, mapping
 # them to targets, then summarizing/visualizing results.
