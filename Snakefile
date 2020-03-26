@@ -87,18 +87,18 @@ rule bam_to_reads:
     output:
         output_dir/"reads"/"{sample}.fastq.gz"
     params:
-        out_fastq = str(output_dir/"reads"/"{sample}.fastq.gz")
+        out_fastq = str(output_dir/"reads"/"{sample}.fastq")
     conda:
-        "samtools_env.yml"
+        "alignment_processing_env.yml"
     shell:
         """
-        bedtools bamtofastq -i {input} -o {params.out_fastq}
+        bedtools bamtofastq -i {input} -fq {params.out_fastq}
         gzip {params.out_fastq}
         """
 
 rule all_dump_unmapped:
     input:
-        expand(str(output_dir/"preproc"/"{sample}.fastq.gz"), sample = Samples)
+        expand(str(output_dir/"reads"/"{sample}.fastq.gz"), sample = Samples)
 
 # Align reads
 
@@ -122,9 +122,10 @@ rule align_reads:
         output_dir/"alignments"/"{sample}.sam"
     conda:
         "align_env.yml"
+    threads: 1
     shell:
         """
-        minimap2 -ax sr {input.db} {input.reads} > {output}
+        minimap2 -t {threads} -ax sr {input.db} {input.reads} > {output}
         """
 
 rule all_align:
@@ -137,9 +138,11 @@ rule process_alignment:
     input:
         output_dir/"alignments"/"{sample}.sam"
     output:
-        bam = temp(output_dir/"alignments"/"{sample}.bam"),
-        sorted = temp(output_dir/"alignments"/"{sample}.sorted.bam"),
-        bai = temp(output_dir/"alignments"/"{sample}.sorted.bam.bai")
+        bam = output_dir/"alignments"/"{sample}.bam",
+        sorted = output_dir/"alignments"/"{sample}.sorted.bam",
+        bai = output_dir/"alignments"/"{sample}.sorted.bam.bai"
+    conda:
+        "alignment_processing_env.yml"
     params:
         target = config["align"]["target_fasta"]
     shell:

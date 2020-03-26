@@ -1,0 +1,3 @@
+[submodule "hisss"]
+	path = hisss
+	url = https://github.com/louiejtaylor/hisss
