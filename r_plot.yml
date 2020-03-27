@@ -1,0 +1,10 @@
+channels:
+ - bioconda
+ - conda-forge
+ - r
+dependencies:
+ - r-base
+ - r-ggplot2
+ - r-reshape2
+ - r-magrittr
+ - samtools

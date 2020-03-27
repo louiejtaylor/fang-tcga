@@ -19,6 +19,7 @@ try:
     print("Found",len(Samples),"samples")
 except FileNotFoundError:
     print("Sample list not initialized: be sure to run with the generate_sample_list target rule before your first run.")
+    Samples = []
 
 print(Samples)
 
@@ -132,8 +133,6 @@ rule all_align:
     input:
         expand(str(output_dir/"alignments"/"{sample}.bam"), sample = Samples)
 
-
-# Summarize alignments
 rule process_alignment:
     input:
         output_dir/"alignments"/"{sample}.sam"
@@ -152,16 +151,94 @@ rule process_alignment:
         samtools index {output.sorted} {output.bai}
         """
 
-#rule summarize_alignments:
-#    input:
-#        rules.align_reads.output
-#    output:
-#        # some kind of human and machine-readable summary--text file?
-#    conda:
-#        "samtools_env.yml"
-#    shell:
-#        """
-#        
-#        """
+# Summarize alignments
+rule mapping_stats:
+    input: 
+        bam = output_dir/"alignments"/"{sample}.sorted.bam",
+        idx = output_dir/"alignments"/"{sample}.sorted.bam.bai"
+    output:
+        output_dir/"summary"/"idxstats"/"{sample}.sorted.idxstats.tsv"
+    conda:
+        "alignment_processing_env.yml"
+    shell:
+        """
+        samtools idxstats {input.bam} > {output}
+        """
+
+rule calculate_coverage:
+    input:
+        bam = output_dir/"alignments"/"{sample}.sorted.bam",
+        idx = output_dir/"alignments"/"{sample}.sorted.bam.bai"
+    output:
+        output_dir/"summary"/"coverage"/"{sample}.genomecoverage.txt"
+    conda:
+        "alignment_processing_env.yml"
+    shell:
+        """
+        samtools view -b {input.bam}|genomeCoverageBed -ibam stdin|grep -v 'genome'| perl hisss/scripts/coverage_counter.pl > {output}	
+        """
+
+rule combine_coverage_stats:
+    input:
+        cov = output_dir/"summary"/"coverage"/"{sample}.genomecoverage.txt",
+        stats = output_dir/"summary"/"idxstats"/"{sample}.sorted.idxstats.tsv"
+    output:
+        output_dir/"summary"/"individual"/"{sample}.align.summary.txt"
+    conda:
+        "r_plot.yml"
+    shell:
+        """
+        Rscript hisss/scripts/summarize_alignments.R {input.cov} {input.stats} {output}
+        """
+
+#Combine information for all samples into a single file
+rule all_summary:
+    input:
+        expand(str(output_dir/"summary"/"individual"/"{sample}.align.summary.txt"),sample=Samples)
+    output:
+        output_dir/"summary"/"all_align_summary.txt"
+    params:
+        align_dir = output_dir/"summary"/"individual"
+    shell:
+        """
+        echo -e "Sample\tAlignTarget\tFractionCoverage\tTargetLength\tMappedReads" > {output}
+        cat {params.align_dir}/*.align.summary.txt >> {output}
+        """
 
 
+rule plot_depth:
+    input:
+        output_dir/"alignments"/"{sample}.sorted.bam"
+    output:
+        cov=output_dir/"summary"/"plots"/"{sample}.cov.depth.txt"
+    params:
+        plot=output_dir/"summary"/"plots"/"{sample}.cov.pdf"
+    conda:
+        "r_plot.yml"
+    shell:
+        """
+        samtools depth -a {input} > {output.cov}	
+        if [ -s {output.cov} ]; then
+            Rscript hisss/scripts/plot_coverage.R {output.cov} {params.plot};
+        else
+            echo "No valid alignments detected";
+        fi
+        """
+
+#Combine information for all samples into a single file
+rule all_plot:
+    input:
+        expand(str(output_dir/"summary"/"plots"/"{sample}.cov.depth.txt"),sample=Samples)
+    output:
+        output_dir/"summary"/"all_plot_summary.txt"
+    params:
+        plot_dir = output_dir/"summary"/"plots"
+    shell:
+        """
+        cat {params.plot_dir}/*.cov.depth.txt > {output}
+        """
+
+rule all:
+    input:
+        a=output_dir/"summary"/"all_align_summary.txt",
+        b=output_dir/"summary"/"all_plot_summary.txt"

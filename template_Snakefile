@@ -6,46 +6,51 @@
 
 rule mapping_stats:
 	input: 
-		bam = str(OUTPUT_DIR+"/alignments/{sample}.sorted.bam"),
-		idx = str(OUTPUT_DIR+"/alignments/{sample}.sorted.bam.bai")
+		bam = output_dir/"alignments"/"{sample}.sorted.bam",
+		idx = output_dir/"alignments"/"{sample}.sorted.bam.bai"
 	output:
-		temp(str(OUTPUT_DIR+"/alignments/{sample}.sorted.idxstats.tsv"))
+		output_dir/"summary"/"idxstats"/"{sample}.sorted.idxstats.tsv"
+    conda:
+        "alignment_processing_env.yml"
 	shell:
 		"""
 		samtools idxstats {input.bam} > {output}
 		"""
 rule calculate_coverage:
-	input:
-		bam = str(OUTPUT_DIR+"/alignments/{sample}.sorted.bam"),
-		idx = str(OUTPUT_DIR+"/alignments/{sample}.sorted.bam.bai")
+        input:
+                bam = output_dir/"alignments"/"{sample}.sorted.bam",                                                               idx = output_dir/"alignments"/"{sample}.sorted.bam.bai"
 	output:
-		str(OUTPUT_DIR+"/alignments/{sample}.genomecoverage.txt")
+		output_dir/"summary"/"coverage"/"{sample}.genomecoverage.txt"
+    conda:
+        "alignment_processing_env.yml"
 	shell:
 		"""
-		samtools view -b {input.bam}|genomeCoverageBed -ibam stdin|grep -v 'genome'| perl scripts/coverage_counter.pl > {output}	
+		samtools view -b {input.bam}|genomeCoverageBed -ibam stdin|grep -v 'genome'| perl hisss/scripts/coverage_counter.pl > {output}	
 		"""
+
 rule combine_coverage_stats:
 	input:
-		cov = str(OUTPUT_DIR+"/alignments/{sample}.genomecoverage.txt"),
-		stats = str(OUTPUT_DIR+"/alignments/{sample}.sorted.idxstats.tsv")
+		cov = output_dir/"summary"/"coverage"/"{sample}.genomecoverage.txt",
+		stats = output_dir/"summary"/"idxstats"/"{sample}.sorted.idxstats.tsv"
 	output:
-		str(OUTPUT_DIR+"/alignments/{sample}.align.summary.txt")
-
+		output_dir/"summary"/"individual"/"{sample}.align.summary.txt"
+    conda:
+        "r_plot.yml"
 	shell:
 		"""
-		Rscript scripts/summarize_alignments.R {input.cov} {input.stats} {output}
+		Rscript hisss/scripts/summarize_alignments.R {input.cov} {input.stats} {output}
 		"""
 
 #Combine information for all samples into a single file
 rule all_summary:
 	input:
-		expand(OUTPUT_DIR+"/alignments/{sample}.align.summary.txt",sample=config["samples"])
+		expand(str(output_dir/"summary"/"individual"/"{sample}.align.summary.txt"),sample=Samples)
 	output:
-		str(OUTPUT_DIR+"/summary/all_align_summary.txt")
+		output_dir/"summary"/"all_align_summary.txt"
 	params:
-		align_dir = str(OUTPUT_DIR + "/alignments/")
+		align_dir = output_dir/"summary"/"individual"
 	shell:
 		"""
 		echo -e "Sample\tAlignTarget\tFractionCoverage\tTargetLength\tMappedReads" > {output}
-		cat {params.align_dir}*.align.summary.txt >> {output}
+		cat {params.align_dir}/*.align.summary.txt >> {output}
 		"""
