@@ -21,7 +21,7 @@ except FileNotFoundError:
     print("Sample list not initialized: be sure to run with the generate_sample_list target rule before your first run.")
     Samples = []
 
-print(Samples)
+print("Found " +str(len(Samples))+" samples.")
 
 # Generate sample list (if necessary)
 rule generate_sample_list:
@@ -80,7 +80,7 @@ rule download_bams:
     input:
         sample_list = output_dir/"samples"/"sample_list.txt"
     output:
-        output_dir/"download"/"{sample}.bam"
+        temp(output_dir/"download"/"{sample}.bam")
     params:
         token_str = ("-t "+ config["download"]["token_file"])*(len(config["download"]["token_file"]) > 0),
         sample = "{sample}",
@@ -103,7 +103,7 @@ rule bam_to_reads:
     input:
         output_dir/"download"/"{sample}.bam"
     output:
-        output_dir/"reads"/"{sample}.fastq.gz"
+        temp(output_dir/"reads"/"{sample}.fastq.gz")
     params:
         out_fastq = str(output_dir/"reads"/"{sample}.fastq")
     conda:
@@ -137,7 +137,7 @@ rule align_reads:
         reads = output_dir/"reads"/"{sample}.fastq.gz",
         db = output_dir/"db"/"db.mmi"
     output:
-        output_dir/"alignments"/"{sample}.sam"
+        temp(output_dir/"alignments"/"{sample}.sam")
     conda:
         "align_env.yml"
     threads: 1
@@ -154,7 +154,7 @@ rule process_alignment:
     input:
         output_dir/"alignments"/"{sample}.sam"
     output:
-        bam = output_dir/"alignments"/"{sample}.bam",
+        bam = temp(output_dir/"alignments"/"{sample}.bam"),
         sorted = output_dir/"alignments"/"{sample}.sorted.bam",
         bai = output_dir/"alignments"/"{sample}.sorted.bam.bai"
     conda:
