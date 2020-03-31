@@ -57,6 +57,10 @@ rule generate_sample_list:
                     except requests.exceptions.Timeout:
                         print("connection failed for "+c+", retrying "+str(retries)+"x")
                         continue
+                    except requests.exceptions.ConnectionError:
+                        print("connectionError for "+c+", retrying "+str(retries)+"x")
+                        time.sleep(3)
+                        continue
 
                 json_mapping = json.loads(response.text)
                 for fi in json_mapping["data"]["files"]:
@@ -65,11 +69,11 @@ rule generate_sample_list:
                             #file_list.append([c, fi["file_id"], fi["file_name"]])
                             with open(params.output_dir/(str(c)+".txt"),"w") as o:
                                 o.write(fi["file_id"]+"\n")
-            shell("cat {params.output_dir}/*.txt > {output.sample_list}")
+            shell("cat {params.output_dir}/*.txt | sort | uniq > {output.sample_list}")
         else:
             final_list = acc_list
             with open(output.sample_list, "w") as o:
-                o.write('\n'.join(final_list))
+                o.write('\n'.join(list(set(final_list))))
 
 # Acquire data
 rule download_bams:
