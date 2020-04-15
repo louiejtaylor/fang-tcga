@@ -164,11 +164,12 @@ rule process_alignment:
         "alignment_processing_env.yml"
     params:
         target = config["align"]["target_fasta"]
+    threads: 1
     shell:
         """
-        samtools view -bT {params.target} {input} > {output.bam}
-        samtools sort -o {output.sorted} {output.bam}
-        samtools index {output.sorted} {output.bai}
+        samtools view -@ {threads} -bT {params.target} {input} > {output.bam}
+        samtools sort -@ {threads} -o {output.sorted} {output.bam}
+        samtools index -@ {threads} {output.sorted} {output.bai}
         """
 
 # Summarize alignments
@@ -180,9 +181,10 @@ rule mapping_stats:
         output_dir/"summary"/"idxstats"/"{sample}.sorted.idxstats.tsv"
     conda:
         "alignment_processing_env.yml"
+    threads: 1
     shell:
         """
-        samtools idxstats {input.bam} > {output}
+        samtools idxstats -@ {threads} {input.bam} > {output}
         """
 
 rule calculate_coverage:
@@ -193,9 +195,10 @@ rule calculate_coverage:
         output_dir/"summary"/"coverage"/"{sample}.genomecoverage.txt"
     conda:
         "alignment_processing_env.yml"
+    threads: 1
     shell:
         """
-        samtools view -b {input.bam}|genomeCoverageBed -ibam stdin|grep -v 'genome'| perl hisss/scripts/coverage_counter.pl > {output}	
+        samtools view -@ {threads} -b {input.bam}|genomeCoverageBed -ibam stdin|grep -v 'genome'| perl hisss/scripts/coverage_counter.pl > {output}	
         """
 
 rule combine_coverage_stats:
@@ -235,9 +238,10 @@ rule plot_depth:
         plot=output_dir/"summary"/"plots"/"{sample}.cov.pdf"
     conda:
         "r_plot.yml"
+    threads: 1
     shell:
         """
-        samtools depth -a {input} > {output.cov}	
+        samtools depth -@ {threads} -a {input} > {output.cov}	
         if [ -s {output.cov} ]; then
             Rscript hisss/scripts/plot_coverage.R {output.cov} {params.plot};
         else
