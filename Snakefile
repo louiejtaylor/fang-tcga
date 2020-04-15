@@ -87,10 +87,12 @@ rule download_bams:
         wdir = str(output_dir/"download"/"{sample}")
     conda:
         "download_env.yml"
+    threads: 1
     shell:
         """
         mkdir -p {params.wdir}
-        gdc-client download -d {params.wdir} {params.token_str} {params.sample}
+        sleep 5
+        gdc-client download -n {threads} -d {params.wdir} {params.token_str} {params.sample}
         mv {params.wdir}/https\:/api.gdc.cancer.gov/data/{params.sample}/*.bam {output}
         """
 
@@ -127,9 +129,10 @@ rule build_aln_db:
         output_dir/"db"/"db.mmi"
     conda:
         "align_env.yml"
+    threads: 1
     shell:
         """
-        minimap2 -x sr -d {output} {input}
+        minimap2 -x sr -t {threads} -d {output} {input}
         """
 
 rule align_reads:
