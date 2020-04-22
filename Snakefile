@@ -10,7 +10,7 @@ import json, requests, os, time
 def read_samples(sample_fp):
     with open(sample_fp, "r") as f:
         samples = f.read()
-    return [sample.strip() for sample in samples.split("\n") if len(sample) > 0]
+    return [sample.strip() for sample in samples.split("\n") if len(sample.strip()) > 0]
 
 output_dir = Path(config["all"]["root_dir"])/Path(config["all"]["output_dir"])
 
@@ -66,7 +66,6 @@ rule generate_sample_list:
                 for fi in json_mapping["data"]["files"]:
                     if fi["data_format"]=="BAM":
                         if fi["experimental_strategy"] in params.experimental_strategies:
-                            #file_list.append([c, fi["file_id"], fi["file_name"]])
                             with open(params.output_dir/(str(c)+".txt"),"w") as o:
                                 o.write(fi["file_id"]+"\n")
             shell("cat {params.output_dir}/*.txt | sort | uniq > {output.sample_list}")
@@ -91,7 +90,6 @@ rule download_bams:
     shell:
         """
         mkdir -p {params.wdir}
-        sleep 5
         gdc-client download -n {threads} -d {params.wdir} {params.token_str} {params.sample}
         mv {params.wdir}/https\:/api.gdc.cancer.gov/data/{params.sample}/*.bam {output}
         """
