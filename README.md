@@ -1,7 +1,7 @@
 # fang-tcga
-Snakemake workflow to map non-human TCGA reads to target genomes and summarize alignments
+Snakemake workflow to map TCGA reads to target genomes and summarize alignments
 
-Note: this project is under active development and is not currently operational.
+Warning: this project is under active development and may break in unexpected ways.
 
 ## Install
 
@@ -19,12 +19,16 @@ Requires Snakemake and Conda to run. All other dependencies are handled at runti
 
     snakemake --configfile config.yml --use-conda
 
+Before your first run, map your case IDs to file IDs using the `generate_sample_list` rule:
+
+    snakemake --configfile config.yml --use-conda generate_sample_list
+
 If you'd like only certain outputs, specify a target rule like so:
 
     snakemake --configfile config.yml --use-conda all_preprocess
 
-Available target rules include: `all_download`, `all_preprocess`, `all_align`, `all_summarize`
+Available target rules include: `all_download`, `all_preprocess`, `all_align`, `all_summary`
 
 ## About
 
-fang-tcga is a backronym which stands for **f**inding **a**dditional **n**on-human **g**enomes in TCGA.
+fang-tcga is a backronym which stands for **f**inding **a**dditional **n**on-human **g**enomes in TCGA. It also uses code directly, as a submodule, or modified from, [hisss](https://github.com/louiejtaylor/hisss), a collab with ArwaAbbas.
