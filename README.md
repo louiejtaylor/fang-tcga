@@ -17,7 +17,7 @@ Requires Snakemake and Conda to run. All other dependencies are handled at runti
 
 ## Run
 
-**Note: if the data you are trying to access is controlled (e.g., not public), you will need an access token from the Genomic Data Commons.** There are detailed instructions for obtaining one [here](https://docs.gdc.cancer.gov/Data_Transfer_Tool/Users_Guide/Preparing_for_Data_Download_and_Upload/#obtaining-an-authentication-token-for-data-downloads).
+**Note: if the data you are trying to access are controlled (e.g., not public), you will need an access token from the Genomic Data Commons.** There are detailed instructions for obtaining one [here](https://docs.gdc.cancer.gov/Data_Transfer_Tool/Users_Guide/Preparing_for_Data_Download_and_Upload/#obtaining-an-authentication-token-for-data-downloads).
 
     snakemake --configfile config.yml --use-conda
 
