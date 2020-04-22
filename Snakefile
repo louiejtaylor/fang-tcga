@@ -114,7 +114,7 @@ rule bam_to_reads:
         gzip {params.out_fastq}
         """
 
-rule all_dump_unmapped:
+rule all_preprocess:
     input:
         expand(str(output_dir/"reads"/"{sample}.fastq.gz"), sample = Samples)
 
