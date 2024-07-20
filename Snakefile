@@ -85,7 +85,7 @@ rule download_bams:
         sample = "{sample}",
         wdir = str(output_dir/"download"/"{sample}")
     conda:
-        "download_env.yml"
+        "envs/download_env.yml"
     threads: 1
     shell:
         """
@@ -107,7 +107,7 @@ rule bam_to_reads:
     params:
         out_fastq = str(output_dir/"reads"/"{sample}.fastq")
     conda:
-        "alignment_processing_env.yml"
+        "envs/alignment_processing_env.yml"
     shell:
         """
         bedtools bamtofastq -i {input} -fq {params.out_fastq}
@@ -126,7 +126,7 @@ rule build_aln_db:
     output:
         output_dir/"db"/"db.mmi"
     conda:
-        "align_env.yml"
+        "envs/align_env.yml"
     threads: 1
     shell:
         """
