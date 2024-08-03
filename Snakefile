@@ -140,7 +140,7 @@ rule align_reads:
     output:
         temp(output_dir/"alignments"/"{sample}.sam")
     conda:
-        "align_env.yml"
+        "envs/align_env.yml"
     threads: 1
     shell:
         """
@@ -159,7 +159,7 @@ rule process_alignment:
         sorted = output_dir/"alignments"/"{sample}.sorted.bam",
         bai = output_dir/"alignments"/"{sample}.sorted.bam.bai"
     conda:
-        "alignment_processing_env.yml"
+        "envs/alignment_processing_env.yml"
     params:
         target = config["align"]["target_fasta"]
     threads: 1
@@ -178,7 +178,7 @@ rule mapping_stats:
     output:
         output_dir/"summary"/"idxstats"/"{sample}.sorted.idxstats.tsv"
     conda:
-        "alignment_processing_env.yml"
+        "envs/alignment_processing_env.yml"
     threads: 1
     shell:
         """
@@ -192,7 +192,7 @@ rule calculate_coverage:
     output:
         output_dir/"summary"/"coverage"/"{sample}.genomecoverage.txt"
     conda:
-        "alignment_processing_env.yml"
+        "envs/alignment_processing_env.yml"
     threads: 1
     shell:
         """
@@ -206,7 +206,7 @@ rule combine_coverage_stats:
     output:
         output_dir/"summary"/"individual"/"{sample}.align.summary.txt"
     conda:
-        "r_plot.yml"
+        "envs/r_plot.yml"
     shell:
         """
         Rscript hisss/scripts/summarize_alignments.R {input.cov} {input.stats} {output}
@@ -235,7 +235,7 @@ rule plot_depth:
     params:
         plot=output_dir/"summary"/"plots"/"{sample}.cov.pdf"
     conda:
-        "r_plot.yml"
+        "envs/r_plot.yml"
     threads: 1
     shell:
         """
