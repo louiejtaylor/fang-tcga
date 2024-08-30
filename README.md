@@ -11,7 +11,7 @@ recommended for reproducibility.
 
 ## Requirements
 
-Requires Snakemake and Conda to run. All other dependencies are handled at runtime by Conda.
+Requires [Conda](https://www.anaconda.com/download) and [Snakemake](https://snakemake.readthedocs.io/en/stable/) (`conda install snakemake -c conda-forge -c bioconda`) to run. All other dependencies are handled at runtime by Conda.
 
 ## Run
 
