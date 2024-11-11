@@ -23,7 +23,7 @@ except FileNotFoundError:
 
 print("Found " +str(len(Samples))+" samples.")
 
-# Generate sample list (if necessary)
+# Generate sample list (first run)
 rule generate_sample_list:
     input:
         sample_file = config["download"]["acc_list_fp"]
@@ -36,19 +36,25 @@ rule generate_sample_list:
         experimental_strategies=config["download"]["allowed_strategies"]
     run:
         shell("mkdir -p {params.output_dir}")
+
+        # check format of sample list
         if params.list_format=="list":
             acc_list = read_samples(input.sample_file)
         elif params.list_format=="gdc-json":
             json_list = json.load(open(input.sample_file))
             acc_list = [z["cases"][0]["case_id"] for z in json_list]
-        else:
+        else: # handle gdc-manifest?
             raise Exception("Unknown sample list format: "+str(params.list_format))
         acc_list = list(set(acc_list))
+
+        # only run if user has case ids and wants pipeline to find the associated files
         if params.needs_mapping:
             for c in acc_list:
-                if os.path.isfile(params.output_dir/(str(c)+".txt")):
+                if os.path.isfile(params.output_dir/(str(c)+".txt")): # sample has been mapped
                     print("found map for "+c+", skipping")
                     continue
+
+                # multiple tries often required for successful download. abstract to config?
                 retries = 3
                 while retries > 0:
                     try:
@@ -62,14 +68,16 @@ rule generate_sample_list:
                         time.sleep(3)
                         continue
 
+                # find associated files in user-specified acceptable strategies
                 json_mapping = json.loads(response.text)
                 for fi in json_mapping["data"]["files"]:
                     if fi["data_format"]=="BAM":
                         if fi["experimental_strategy"] in params.experimental_strategies:
                             with open(params.output_dir/(str(c)+".txt"),"w") as o:
                                 o.write(fi["file_id"]+"\n")
+            # output sample list
             shell("cat {params.output_dir}/*.txt | sort | uniq > {output.sample_list}")
-        else:
+        else: # user supplied file ids, not case ids
             final_list = acc_list
             with open(output.sample_list, "w") as o:
                 o.write('\n'.join(list(set(final_list))))
@@ -118,8 +126,7 @@ rule all_preprocess:
     input:
         expand(str(output_dir/"reads"/"{sample}.fastq.gz"), sample = Samples)
 
-# Align reads
-
+# Read alignments/db building
 rule build_aln_db:
     input:
         config["align"]["target_fasta"]
