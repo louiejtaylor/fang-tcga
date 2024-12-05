@@ -11,11 +11,14 @@ recommended for reproducibility.
 
 ## Requirements
 
-Requires [Conda](https://www.anaconda.com/download) and [Snakemake](https://snakemake.readthedocs.io/en/stable/) (`conda install snakemake -c conda-forge -c bioconda`) to run. All other dependencies are handled at runtime by Conda.
+Requires [Conda](https://www.anaconda.com/download) and [Snakemake](https://snakemake.readthedocs.io/en/stable/) 
+(`conda install snakemake -c conda-forge -c bioconda`) to run. All other dependencies are handled at runtime by Conda.
 
 ## Run
 
-**Note: if the data you are trying to access are controlled (e.g., not public), you will need an access token from the Genomic Data Commons.** There are detailed instructions for obtaining one [here](https://docs.gdc.cancer.gov/Data_Transfer_Tool/Users_Guide/Preparing_for_Data_Download_and_Upload/#obtaining-an-authentication-token-for-data-downloads).
+**Note: if the data you are trying to access are controlled (e.g., not public), 
+you will need an access token from the Genomic Data Commons.** There are detailed 
+instructions for obtaining one [here](https://docs.gdc.cancer.gov/Data_Transfer_Tool/Users_Guide/Preparing_for_Data_Download_and_Upload/#obtaining-an-authentication-token-for-data-downloads).
 
     snakemake --configfile config.yml --use-conda
 
@@ -31,4 +34,6 @@ Available target rules include: `all_download`, `all_preprocess`, `all_align`, `
 
 ## About
 
-fang-tcga is a backronym which stands for **f**inding **a**dditional **n**on-human **g**enomes in TCGA. It also uses code directly, as a submodule, or modified from, [hisss](https://github.com/louiejtaylor/hisss), a collab with ArwaAbbas.
+fang-tcga is a backronym which stands for **f**inding **a**dditional **n**on-human **g**enomes in TCGA. 
+It also uses code directly, as a submodule, or modified from, 
+[hisss](https://github.com/louiejtaylor/hisss), a collab with @ArwaAbbas.
