@@ -54,8 +54,8 @@ rule generate_sample_list:
                     print("found map for "+c+", skipping")
                     continue
 
-                # multiple tries often required for successful download. abstract to config?
-                retries = 3
+                # multiple tries often required for successful download
+                retries = int(config["download"]["retries"])
                 while retries > 0:
                     try:
                         response = requests.get("https://api.gdc.cancer.gov/cases/"+c+"?expand=files", timeout = 10)

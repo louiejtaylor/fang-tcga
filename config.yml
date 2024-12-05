@@ -5,10 +5,11 @@ all:
 
 download:
   acc_list_fp: ""
-  acc_list_format: "" #options: "gdc-json", "list", "gdc-manifest"
-  map_sample_list_to_file_ids: True #if the sample list is actually a list of case IDs
+  acc_list_format: "" # options: "gdc-json", "list", "gdc-manifest"
+  map_sample_list_to_file_ids: True # if the sample list is actually a list of case IDs
   allowed_strategies: ["WGS","WXS","RNA-Seq"]
-  token_file: ""
+  token_file: "" # access token
+  retries: 3
 
 align:
   target_fasta: ""
