@@ -8,6 +8,10 @@ from pathlib import Path
 import json, requests, os, time
 
 def read_samples(sample_fp):
+    """
+    Read pipeline-generated sample list (one plaintext sample ID per line)
+    from supplied `sample_fp`.
+    """
     with open(sample_fp, "r") as f:
         samples = f.read()
     return [sample.strip() for sample in samples.split("\n") if len(sample.strip()) > 0]
